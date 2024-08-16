@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16.2
+    restart: always
+    volumes:
+      - sports_lines_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: sports_lines_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "54322:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - default
+
+#  catsapp:
+#    build:
+#      context: .
+#      dockerfile: ./Dockerfile
+#    container_name: catsapp
+#    command: >
+#      sh -c '/wait-for-it.sh db:5432 -- python manage.py runserver 0.0.0.0:8080'
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - DATABASE_NAME=cats_db
+#      - DATABASE_USER=postgres
+#      - DATABASE_PASSWORD=admin
+#      - DATABASE_HOST=db
+#      - DATABASE_PORT=5432
+#    depends_on:
+#      - db
+#    networks:
+#      - default
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  sports_lines_postgres_data:
+    external: true
+
+# docker build . -t catsapp
+
+# docker volume create sports_lines_postgres_data
+# docker compose up -d
+
+# docker compose run catsapp python manage.py test - для правильного выполнения тестов в контейнере
+# python manage.py test catsapp.tests  - временное решение для работы с тестовой локальной БД
+
+
+# docker compose up --build
+
+# cd The_ad_counter
+# python manage.py runserver
+
+# python manage.py migrate catsapp zero откатить миграции
+# python manage.py dumpdata catsapp --indent 2 > catsapp/fixtures/app_fixture.json
