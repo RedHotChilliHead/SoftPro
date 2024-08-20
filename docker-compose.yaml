@@ -20,25 +20,57 @@ services:
     networks:
       - default
 
-#  catsapp:
-#    build:
-#      context: .
-#      dockerfile: ./Dockerfile
-#    container_name: catsapp
-#    command: >
-#      sh -c '/wait-for-it.sh db:5432 -- python manage.py runserver 0.0.0.0:8080'
-#    ports:
-#      - "8080:8080"
-#    environment:
-#      - DATABASE_NAME=cats_db
-#      - DATABASE_USER=postgres
-#      - DATABASE_PASSWORD=admin
-#      - DATABASE_HOST=db
-#      - DATABASE_PORT=5432
-#    depends_on:
-#      - db
-#    networks:
-#      - default
+  lines_provider:
+    image: antonboom/lines-provider
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - default
+
+  django_http_app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: django_http_app
+    command: >
+      sh -c '/wait-for-it.sh db:5432 -- python manage.py runserver 0.0.0.0:8080'
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_NAME=sports_lines_db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=admin
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+    depends_on:
+      - db
+    networks:
+      - default
+
+  grpc_server:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: grpc_server
+    command: >
+      sh -c '/wait-for-it.sh db:5432 -- python -m grpsapp.grpc_server'
+    ports:
+      - "50051:50051"
+    environment:
+#      - PYTHONPATH=/softproapp/SoftPro
+      - PYTHONPATH=/softproapp
+      - DJANGO_SETTINGS_MODULE=SoftPro.settings
+      - DATABASE_NAME=sports_lines_db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=admin
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+    depends_on:
+      - db
+    networks:
+      - default
 
 networks:
   default:

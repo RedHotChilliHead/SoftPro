@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package sports;
+
+service SportsLines {
+  rpc SubscribeOnSportsLines(stream SportsLinesRequest) returns (stream SportsLinesResponse);
+}
+
+message SportsLinesRequest {
+  repeated string sports = 1;
+  int32 interval = 2;
+}
+
+message SportsLinesResponse {
+  map<string, float> lines = 1;
+}
