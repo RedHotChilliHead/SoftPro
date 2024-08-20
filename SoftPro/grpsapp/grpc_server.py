@@ -1,5 +1,6 @@
 import json
 
+import threading
 import grpc
 from concurrent import futures  # для создания пула потоков, который управляет асинхронным выполнением
 import time
@@ -7,28 +8,35 @@ from . import sports_pb2 as sports__pb2
 from grpsapp import sports_pb2_grpc
 from decimal import Decimal, ROUND_HALF_UP
 
-
 import requests
 
 import os
 import django
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'SoftPro.settings')
 django.setup()
 from httpapp.models import Soccer, Baseball, Football
 
 
-class SportsLinesService(sports_pb2_grpc.SportsLinesServicer):  # Контекст gRPC, предоставляющий метаданные и вспомогательные методы для обработки запроса
+# gRPC сервер
+class SportsLinesService(
+    sports_pb2_grpc.SportsLinesServicer):  # Контекст gRPC, предоставляющий метаданные и вспомогательные методы для обработки запроса
     """
     Запрос: [soccer, football] 3s
     Ответ: {soccer: 1.13, football: 2.19}
     """
-    def __init__(self):
-        # Флаг, который отслеживает, был ли уже выполнен первый запрос
-        self.first_request = True
-        self.previous_lines = {}
 
-    def SubscribeOnSportsLines(self, request_iterator, context):  # Обрабатывает входящие запросы и отправляет обратно потоки данных клиентам
+    def __init__(self, stop_event):
+        self.first_request = True  # Флаг, который отслеживает, был ли уже выполнен первый запрос
+        self.previous_lines = {}  # словарь предыдущих значений линий спортов
+        self.stop_event = stop_event  # Флаг, отслеживающий запрос от клиента и останавливает первоначальных воркеров
+
+    def SubscribeOnSportsLines(self, request_iterator,
+                               context):  # Обрабатывает входящие запросы и отправляет обратно потоки данных клиентам
         print('Start SubscribeOnSportsLines')
+        if not self.stop_event.is_set():
+            self.stop_event.set()
+
         for request in request_iterator:  # Итератор входящих запросов, позволяющий обрабатывать потоковые запросы
             print('Start get_sports_lines')
             sports_lines = self.get_sports_lines(request.sports)
@@ -92,10 +100,9 @@ class SportsLinesService(sports_pb2_grpc.SportsLinesServicer):  # Контекс
         return result
 
 
-def synchronization():
-    print('Start synchronization')
-    sports = ['soccer', 'football', 'baseball']
-    for sport in sports:
+def start_worker(sport, interval, stop_event):
+    while not stop_event.is_set():
+        print('First start workers')
         response = requests.get(f'http://lines_provider:8000/api/v1/lines/{sport}')
         response_data = json.loads(response.content)
         current_value = float(response_data['lines'][sport.upper()])
@@ -105,14 +112,26 @@ def synchronization():
             Football.objects.create(line=current_value)
         elif sport == 'baseball':
             Baseball.objects.create(line=current_value)
+        time.sleep(interval)
 
 
-def serve():  # Запускает gRPC сервер
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=3))  # Использует пул потоков для обработки нескольких запросов одновременно
-    sports_pb2_grpc.add_SportsLinesServicer_to_server(SportsLinesService(), server)  # регистрирует сервис на сервере
+def serve():  # Запускает gRPC сервер и первоначальные синхронизации пока нет запроса от клиента
+
+    # Создаем события остановки для воркеров
+    stop_event = threading.Event()
+
+    # Список спортов и интервалов для воркеров
+    sports_intervals = [("soccer", 60), ("football", 60), ("baseball", 60)]
+
+    # Запуск воркеров в отдельных потоках
+    for sport, interval in sports_intervals:
+        threading.Thread(target=start_worker, args=(sport, interval, stop_event)).start()
+
+    server = grpc.server(futures.ThreadPoolExecutor(
+        max_workers=3))  # Использует пул потоков для обработки нескольких запросов одновременно
+    sports_pb2_grpc.add_SportsLinesServicer_to_server(SportsLinesService(stop_event), server)  # регистрирует сервис на сервере
     server.add_insecure_port('[::]:50051')  # Сервер слушает на порту 50051
     print('Listening on port 50051')
-    synchronization()  # базовая синхронизация линий
     server.start()  # Сервер начинает обрабатывать входящие запросы
     print('Start server')
     server.wait_for_termination()  # Сервер остается активным, пока его не остановят

@@ -15,7 +15,7 @@ def run():
 
         # Формируем запрос
         request_iterator = iter([
-            sports_pb2.SportsLinesRequest(sports=["soccer", "football"], interval=3)
+            sports_pb2.SportsLinesRequest(sports=["soccer"], interval=3)
         ])
 
         # Отправляем запросы и обрабатываем ответы
