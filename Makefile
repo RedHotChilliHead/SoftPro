@@ -14,6 +14,11 @@ stop:
 # Линтинг с использованием pylint
 .PHONY: lint
 
-# Линтинг с использованием pylint
 lint:
-	@pylint ./SoftPro
+	@echo "Running pylint..."
+	export DJANGO_SETTINGS_MODULE=SoftPro.settings && pylint ./SoftPro
+
+# Запустить тестирование
+.PHONY: test
+test:
+	$(DOCKER_COMPOSE) down && $(DOCKER_COMPOSE) build && $(DOCKER_COMPOSE) run django_http_app python manage.py test
