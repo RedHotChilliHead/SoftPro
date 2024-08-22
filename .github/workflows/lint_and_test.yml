@@ -1,0 +1,48 @@
+name: Lint and Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up Python Environment
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+    - name: Install Dependencies
+      run: |
+        docker volume create sports_lines_postgres_data
+        docker compose up -d
+        docker compose run django_http_app python manage.py migrate
+
+    - name: Run Tests
+      run: |
+        make test
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python Environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11'
+      - name: Install Dependencies
+        run: |
+          docker volume create sports_lines_postgres_data
+          docker compose up -d
+          docker compose run django_http_app python manage.py migrate
+
+      - name: Run Lint
+        run: |
+          make lint
