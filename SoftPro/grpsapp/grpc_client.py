@@ -27,7 +27,7 @@ def run():
                 logging.info(f"Received sports lines: {response.lines}")
 
         except grpc.RpcError:
-            logging.error(f"gRPC was terminated")
+            logging.error("gRPC was terminated")
 
 
 if __name__ == '__main__':

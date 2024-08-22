@@ -45,4 +45,7 @@ jobs:
 
       - name: Run Lint
         run: |
-          make lint
+          docker compose up -d
+          docker compose run django_http_app python -m pip install --upgrade pip
+          docker compose run django_http_app pip install pylint
+          docker compose run django_http_app pylint ./SoftPro
