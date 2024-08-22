@@ -1,8 +1,9 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
-from unittest.mock import patch
-from httpapp.views import check_db_connection, ready
 
+from httpapp.views import ready
 from httpapp.models import Baseball, Football, Soccer
 
 

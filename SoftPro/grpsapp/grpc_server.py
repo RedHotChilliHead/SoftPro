@@ -5,6 +5,7 @@ from concurrent import futures
 import time
 import os
 import requests
+import logging
 
 
 import django
@@ -17,8 +18,9 @@ from httpapp.models import Soccer, Baseball, Football
 
 from . import sports_pb2 as sports__pb2
 
+logging.basicConfig(level=logging.INFO)
 
-# gRPC сервер
+
 class SportsLinesService(sports_pb2_grpc.SportsLinesServicer):
     """
     Контекст gRPC, предоставляющий метаданные и вспомогательные методы для обработки запроса
@@ -35,20 +37,16 @@ class SportsLinesService(sports_pb2_grpc.SportsLinesServicer):
         """
         Обрабатывает входящие запросы и отправляет обратно потоки данных клиентам
         """
-        print('Start SubscribeOnSportsLines')
+        logging.info('Start SubscribeOnSportsLines')
         if not self.stop_event.is_set():
             self.stop_event.set()
 
         # Итератор входящих запросов, позволяющий обрабатывать потоковые запросы
         for request in request_iterator:
-            print('Start get_sports_lines')
             sports_lines = self.get_sports_lines(request.sports)
-            print('sports_lines =', sports_lines)
             yield sports__pb2.SportsLinesResponse(lines=sports_lines)
             while True:
-                print('Start get_sports_lines')
                 sports_lines = self.get_sports_lines(request.sports)
-                print('sports_lines =', sports_lines)
                 yield sports__pb2.SportsLinesResponse(lines=sports_lines)
 
                 # Проверяем на отмену (если клиент отключается)
@@ -62,48 +60,37 @@ class SportsLinesService(sports_pb2_grpc.SportsLinesServicer):
         Реализация основного функционала - получение линий для указанных спортов
         в соответствии с заданным интервалом и сохранение их в базе данных
         """
-        print('enter to get_sports_lines')
         # Получает последние данные о линиях для указанных видов спорта
         result = {}
         for sport in sports:
-            print('start for-sports')
             url = f'http://lines_provider:8000/api/v1/lines/{sport}'
-            print('url =', url)
+            logging.info(f'GET request {url}')
             response = requests.get(url, timeout=10)
-            print('response =', response)
 
             response_data = json.loads(response.content)
-            print('response_data =', response_data)
+            logging.info(f'Response data: {response_data}')
             value_str = response_data['lines'][sport.upper()]
             current_value = float(f"{float(value_str):.2f}")
 
             if self.first_request:
-                print('first request')
                 result[sport] = current_value
-                print('result[sport] = current_value')
             else:
-                print('second request')
                 result[sport] = current_value - self.previous_lines[sport]
-                print('result[sport] = current_value - self.previous_lines[sport]')
 
             self.previous_lines[sport] = current_value
-            print('self.previous_lines[sport] = current_value')
 
             if sport == 'soccer':
-                print('create ', sport)
                 Soccer.objects.create(line=current_value)
             elif sport == 'football':
-                print('create ', sport)
                 Football.objects.create(line=current_value)
             elif sport == 'baseball':
-                print('create ', sport)
                 Baseball.objects.create(line=current_value)
             else:
-                print('ERROR ALARM!!!!!')
+                logging.critical('sport not supported')
                 return {'error': 'an incorrect sport'}
 
         self.first_request = False
-        print('RESULT IS ', result)
+        logging.debug(f'Result is {result}')
         return result
 
 
@@ -113,7 +100,7 @@ def start_worker(sport, interval, stop_event):
     пока не поступит запрос хотя бы от одного клиента
     """
     while not stop_event.is_set():
-        print('First start workers')
+        logging.info('First start workers for a synchronization')
         response = requests.get(f'http://lines_provider:8000/api/v1/lines/{sport}', timeout=10)
         response_data = json.loads(response.content)
         current_value = float(response_data['lines'][sport.upper()])
@@ -145,13 +132,12 @@ def serve():
         max_workers=3))  # Использует пул потоков для обработки нескольких запросов одновременно
     # регистрирует сервис на сервере
     sports_pb2_grpc.add_SportsLinesServicer_to_server(SportsLinesService(stop_event), server)
+    logging.info('Listening on port 50051')
     server.add_insecure_port('[::]:50051')  # Сервер слушает на порту 50051
-    print('Listening on port 50051')
+    logging.info('Start server')
     server.start()  # Сервер начинает обрабатывать входящие запросы
-    print('Start server')
     server.wait_for_termination()  # Сервер остается активным, пока его не остановят
 
 
 if __name__ == '__main__':
-    print('Start main for grpc_server')
     serve()

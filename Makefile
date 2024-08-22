@@ -21,4 +21,4 @@ lint:
 # Запустить тестирование
 .PHONY: test
 test:
-	$(DOCKER_COMPOSE) down && $(DOCKER_COMPOSE) build && $(DOCKER_COMPOSE) run django_http_app python manage.py test
+	$(DOCKER_COMPOSE) run django_http_app python manage.py test

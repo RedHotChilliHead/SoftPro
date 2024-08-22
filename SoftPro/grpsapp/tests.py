@@ -1,14 +1,16 @@
 import json
 import unittest
 import threading
-import grpc
 from concurrent import futures
-from django.test import TestCase
 from unittest.mock import patch, MagicMock
 
-from grpsapp import sports_pb2_grpc, sports_pb2
-from grpsapp.grpc_server import SportsLinesService, serve
+import grpc
+
+from django.test import TestCase
 from django.db import connection
+
+from grpsapp import sports_pb2_grpc, sports_pb2
+from grpsapp.grpc_server import SportsLinesService
 
 
 
@@ -98,4 +100,3 @@ class GRPCTestCase(TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
