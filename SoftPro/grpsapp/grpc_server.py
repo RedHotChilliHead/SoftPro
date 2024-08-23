@@ -4,8 +4,8 @@ import threading
 from concurrent import futures
 import time
 import os
-import requests
 import logging
+import requests
 
 
 import django
@@ -64,11 +64,11 @@ class SportsLinesService(sports_pb2_grpc.SportsLinesServicer):
         result = {}
         for sport in sports:
             url = f'http://lines_provider:8000/api/v1/lines/{sport}'
-            logging.info(f'GET request {url}')
+            logging.info('GET request %s', url)
             response = requests.get(url, timeout=10)
 
             response_data = json.loads(response.content)
-            logging.info(f'Response data: {response_data}')
+            logging.info('Response data: %s', response_data)
             value_str = response_data['lines'][sport.upper()]
             current_value = float(f"{float(value_str):.2f}")
 
@@ -90,7 +90,7 @@ class SportsLinesService(sports_pb2_grpc.SportsLinesServicer):
                 return {'error': 'an incorrect sport'}
 
         self.first_request = False
-        logging.debug(f'Result is {result}')
+        logging.debug('Result is %s', result)
         return result
 
 
@@ -100,7 +100,6 @@ def start_worker(sport, interval, stop_event):
     пока не поступит запрос хотя бы от одного клиента
     """
     while not stop_event.is_set():
-        logging.info('First start workers for a synchronization')
         response = requests.get(f'http://lines_provider:8000/api/v1/lines/{sport}', timeout=10)
         response_data = json.loads(response.content)
         current_value = float(response_data['lines'][sport.upper()])
@@ -124,6 +123,7 @@ def serve():
     # Список спортов и интервалов для воркеров
     sports_intervals = [("soccer", 60), ("football", 60), ("baseball", 60)]
 
+    logging.info('First start workers for a synchronization')
     # Запуск воркеров в отдельных потоках
     for sport, interval in sports_intervals:
         threading.Thread(target=start_worker, args=(sport, interval, stop_event)).start()

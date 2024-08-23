@@ -1,8 +1,8 @@
-import grpc
-
 import logging
+
 import sys
 import os
+import grpc
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from grpsapp import sports_pb2
@@ -24,7 +24,7 @@ def run():
         # Отправляем запросы и обрабатываем ответы
         try:
             for response in stub.SubscribeOnSportsLines(request_iterator):
-                logging.info(f"Received sports lines: {response.lines}")
+                logging.info("Received sports lines: %s", response.lines)
 
         except grpc.RpcError:
             logging.error("gRPC was terminated")

@@ -1,6 +1,5 @@
 [MASTER]
 init-hook='import sys; sys.path.append("SoftPro")'
-django-settings-module=SoftPro.settings
 
 [MESSAGES CONTROL]
 # Выключаем некоторые проверки, которые часто вызывают лишние предупреждения в Django
@@ -26,10 +25,6 @@ max-line-length=120
 [DESIGN]
 # Максимальное количество методов в классе
 max-attributes=10
-
-[TYPECHECK]
-# Позволяет Pylint находить атрибуты у моделей Django
-django-settings-module=SoftPro.settings
 
 # Исключаем миграции из анализа
 ignore=sports_pb2.py, sports_pb2_grpc.py

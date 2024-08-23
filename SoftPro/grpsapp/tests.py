@@ -1,5 +1,4 @@
 import json
-import unittest
 import threading
 from concurrent import futures
 from unittest.mock import patch, MagicMock
@@ -11,7 +10,6 @@ from django.db import connection
 
 from grpsapp import sports_pb2_grpc, sports_pb2
 from grpsapp.grpc_server import SportsLinesService
-
 
 
 class GRPCTestCase(TestCase):
@@ -66,13 +64,11 @@ class GRPCTestCase(TestCase):
                     AND pid <> pg_backend_pid();
                 """)
 
-
     @patch('grpsapp.grpc_server.requests.get')
     def test_subscribe_on_sports_lines(self, mock_get):
         """
         Тестирование метода SubscribeOnSportsLines
         """
-
         # Настраиваем mock для requests.get
         mock_response = MagicMock()
         mock_response.content = json.dumps({
@@ -96,7 +92,3 @@ class GRPCTestCase(TestCase):
         # Проверяем, что метод get был вызван с правильными аргументами
         mock_get.assert_any_call('http://lines_provider:8000/api/v1/lines/soccer', timeout=10)
         mock_get.assert_any_call('http://lines_provider:8000/api/v1/lines/football', timeout=10)
-
-
-if __name__ == '__main__':
-    unittest.main()

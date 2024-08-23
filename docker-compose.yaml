@@ -22,6 +22,7 @@ services:
 
   lines_provider:
     image: antonboom/lines-provider
+    platform: linux/amd64
     ports:
       - "8000:8000"
     depends_on:
