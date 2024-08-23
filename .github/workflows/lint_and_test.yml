@@ -39,13 +39,10 @@ jobs:
           python-version: '3.11'
       - name: Install Dependencies
         run: |
-          docker volume create sports_lines_postgres_data
-          docker compose up -d
-          docker compose run django_http_app python manage.py migrate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Run Lint
         run: |
-          docker compose up -d
-#          docker compose run django_http_app python -m pip install --upgrade pip
-#          docker compose run django_http_app pip install pylint
-          docker compose run django_http_app pylint ./soft_pro
+          export DJANGO_SETTINGS_MODULE=SoftPro.settings
+          pylint ./soft_pro
