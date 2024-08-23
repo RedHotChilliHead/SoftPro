@@ -16,7 +16,7 @@ stop:
 
 lint:
 	@echo "Running pylint..."
-	export DJANGO_SETTINGS_MODULE=SoftPro.settings && pylint ./SoftPro
+	export DJANGO_SETTINGS_MODULE=SoftPro.settings && pylint ./soft_pro
 
 # Запустить тестирование
 .PHONY: test

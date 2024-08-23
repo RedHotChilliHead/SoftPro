@@ -1,5 +1,5 @@
 [MASTER]
-init-hook='import sys; sys.path.append("SoftPro")'
+init-hook='import sys; sys.path.append("soft_pro")'
 
 [MESSAGES CONTROL]
 # Выключаем некоторые проверки, которые часто вызывают лишние предупреждения в Django
