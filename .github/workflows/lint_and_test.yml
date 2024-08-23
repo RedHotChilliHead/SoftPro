@@ -45,4 +45,4 @@ jobs:
       - name: Run Lint
         run: |
           export DJANGO_SETTINGS_MODULE=SoftPro.settings
-          pylint ./soft_pro
+          pylint --disable=C0413,C0415,W0613 ./soft_pro

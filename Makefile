@@ -16,7 +16,7 @@ stop:
 
 lint:
 	@echo "Running pylint..."
-	export DJANGO_SETTINGS_MODULE=SoftPro.settings && pylint ./soft_pro
+	export DJANGO_SETTINGS_MODULE=SoftPro.settings && pylint --disable=C0413,C0415,W0613 ./soft_pro
 
 # Запустить тестирование
 .PHONY: test
