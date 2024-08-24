@@ -4,7 +4,7 @@ DOCKER_COMPOSE=docker compose
 # Запустить проект
 .PHONY: run
 run:
-	$(DOCKER_COMPOSE) up -d
+	docker volume create sports_lines_postgres_data && $(DOCKER_COMPOSE) up -d && docker compose run django_http_app python manage.py migrate
 
 # Остановить проект
 .PHONY: stop
@@ -21,5 +21,4 @@ lint:
 # Запустить тестирование
 .PHONY: test
 test:
-# 	$(DOCKER_COMPOSE) up -d && $(DOCKER_COMPOSE) exec -it django_http_app /bin/bash && python manage.py test && $(DOCKER_COMPOSE) down
 	$(DOCKER_COMPOSE) up -d && $(DOCKER_COMPOSE) run django_http_app python manage.py test && $(DOCKER_COMPOSE) down
